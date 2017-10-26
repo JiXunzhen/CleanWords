@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	fmt.Println(getFileCount("./seowords/files"))
-	size := getFileCount("./seowords/files")
+	dir := os.Args[1]
+	size := getFileCount(dir + "/files")
 	root := buildTrie("./sensitive_words/word.csv")
 
 	ch := make(chan int, 1)
@@ -19,7 +19,7 @@ func main() {
 	ch <- 0
 
 	for i := 0; i < 20; i++ {
-		go run(ch, exit, root, size)
+		go run(ch, exit, root, size, dir)
 	}
 
 	for i := 0; i < 20; i++ {
@@ -30,7 +30,7 @@ func main() {
 	fmt.Println("over")
 }
 
-func run(ch chan int, exit chan int, root *Trie.Trie, size int) {
+func run(ch chan int, exit chan int, root *Trie.Trie, size int, dir string) {
 	for {
 		cur := <-ch
 		ch <- (cur + 1)
@@ -42,7 +42,7 @@ func run(ch chan int, exit chan int, root *Trie.Trie, size int) {
 
 		fmt.Println(cur)
 
-		fileName := fmt.Sprintf("./seowords/files/words%d.csv", cur)
+		fileName := fmt.Sprintf(dir+"/files/words%d.csv", cur)
 		data, err := ioutil.ReadFile(fileName)
 		if err != nil {
 			panic(err)
@@ -50,23 +50,44 @@ func run(ch chan int, exit chan int, root *Trie.Trie, size int) {
 		str := string(data)
 		words := strings.Split(str, "\n")
 
-		resArr := filter(words, root)
+		resArr := filterFile(words, root)
 		resStr := strings.Join(resArr, "\n")
-		ioutil.WriteFile(fmt.Sprintf("./seowords/res/res%d.csv", cur), []byte(resStr), os.ModePerm)
+		ioutil.WriteFile(fmt.Sprintf(dir+"/res/res%d.csv", cur), []byte(resStr), os.ModePerm)
 
 		fmt.Printf("file %d over.\n", cur)
 	}
 }
 
-func filter(words []string, root *Trie.Trie) []string {
+func filterFile(rows []string, root *Trie.Trie) []string {
 	res := make([]string, 0)
-	for _, word := range words {
-		if root.IsExist(([]rune)(word)) {
-			res = append(res, word)
+	for _, row := range rows {
+		word := strings.Split(row, "&")[0]
+
+		if filterWord(word, root) {
+			res = append(res, row)
 		}
 	}
 
 	return res
+}
+
+func filterWord(word string, root *Trie.Trie) bool {
+	// 符号过滤
+	symbols := []string{"，", "；", ":", "&", "=", ",", ";", "*", "#", ".", "-", "‘", "+"}
+	for _, symbol := range symbols {
+		if strings.HasPrefix(word, symbol) {
+			return true
+		}
+	}
+
+	// 单字过滤
+	chword := ([]rune)(word)
+	if len(chword) == 1 {
+		return true
+	}
+
+	// 敏感词过滤
+	return root.IsExist(([]rune)(word))
 }
 
 func getFileCount(path string) int {
@@ -80,17 +101,18 @@ func getFileCount(path string) int {
 
 func buildTrie(fileName string) *Trie.Trie {
 	root := Trie.NewTrie()
+	if fileName != "" {
+		data, err := ioutil.ReadFile(fileName)
 
-	data, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			panic(err)
+		}
+		str := string(data)
 
-	if err != nil {
-		fmt.Printf("read error %v\n", err)
-	}
-	str := string(data)
-
-	rows := strings.Split(str, "\n")
-	for _, row := range rows {
-		root.Insert(([]rune)(row))
+		rows := strings.Split(str, "\n")
+		for _, row := range rows {
+			root.Insert(([]rune)(row))
+		}
 	}
 
 	root.BuildFailPointer()
