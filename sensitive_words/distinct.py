@@ -24,7 +24,6 @@ if __name__ == "__main__":
     for i in range(0, len(wordList)):
         distinct.append(1)
 
-    # print(distinct)
     for idx, word in enumerate(wordList):
         for idx2, word2 in enumerate(wordList):
             if idx != idx2 and distinct[idx] == 1 and distinct[idx2] == 1:
@@ -34,7 +33,6 @@ if __name__ == "__main__":
                 elif word2 in word:
                     print("%s %s" % (word2, word))
                     distinct[idx] = 0
-    # print(distinct)
 
     # 写到文件中
     with open(DIR + "/word.csv", 'w') as f:
