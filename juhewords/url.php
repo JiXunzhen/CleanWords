@@ -3,13 +3,15 @@
 
 use Listing\RefashionJuheListing;
 
-$content = file_get_contents("./result.csv");
+$dir = dirname(__FILE__);
+
+$content = file_get_contents($dir . "/result.csv");
 
 $rows = explode("\n", $content);
 
-$count = 0;
-
-$file = fopen("./url.csv", 'w');
+$cnt = 0;
+$idx = 0;
+$file = fopen($dir . "/urls/url0.txt", 'w');
 
 foreach ($rows as $row) {
     $info = explode("&", $row);
@@ -17,7 +19,16 @@ foreach ($rows as $row) {
     if (count($info) == 3) {
         $url = "http://{$info[2]}.baixing.com/{$info[1]}/" . RefashionJuheListing::SYMBOL . RefashionJuheListing::encode($info[0]) . '/';
 
-        fprintf($file, "$url\n");
+        fwrite($file, "$url\n");
+        $cnt++;
+        if ($cnt == 48000) {
+            $cnt = 0;
+            fclose($file);
+            echo "$idx * 48000 over\n";
+            $idx++;
+
+            $file = fopen($dir . "/urls/url{$idx}.txt", 'w');
+        }
     }
 }
 
