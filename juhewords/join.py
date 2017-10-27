@@ -12,7 +12,7 @@ if __name__ == "__main__":
     
     for fileName in os.listdir(resdir):
         with open(resdir + fileName, 'r') as f:
-            cont += f.read()
+            cont += f.read() + "\n"
 
     resfile = DIR + "/result.csv"
     with open(resfile, 'w') as f:

@@ -5,8 +5,6 @@ if [ ! -d $path ]; then
     echo "no such dir! $path"
     exit 1
 fi
-# 先更新敏感词
-python3 ./sensitive_words/distinct.py
 
 # 运行go脚本, 进行词过滤
 go run main.go $path
